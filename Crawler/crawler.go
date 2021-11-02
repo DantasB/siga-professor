@@ -8,19 +8,12 @@ import (
 	"strings"
 	"time"
 
+	utils "github.com/DantasB/Siga-Professor/Utils"
 	"github.com/antchfx/htmlquery"
 	"golang.org/x/net/html"
 )
 
 var siraUrl = "https://siga.ufrj.br/sira/gradeHoraria/"
-
-func toUtf8(iso8859_1_buf []byte) string {
-	buf := make([]rune, len(iso8859_1_buf))
-	for i, b := range iso8859_1_buf {
-		buf[i] = rune(b)
-	}
-	return string(buf)
-}
 
 func GetSiraCoursesList() ([]string, error) {
 	var courses []string
@@ -37,7 +30,7 @@ func GetSiraCoursesList() ([]string, error) {
 		return []string{}, err
 	}
 
-	htmlDoc, err := htmlquery.Parse(strings.NewReader(toUtf8(body)))
+	htmlDoc, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
 
 	list := htmlquery.Find(htmlDoc, "//td//a[contains(@href, '.html')]")
 	for _, node := range list {
@@ -72,13 +65,21 @@ func AccessSiraCourse(courseUrl string) ([]string, error) {
 		return []string{}, err
 	}
 
-	htmlDoc, err := htmlquery.Parse(strings.NewReader(toUtf8(body)))
+	htmlDoc, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
 
 	if !CourseUpdated(htmlDoc) {
 		return []string{}, nil
 	}
 
+	if !parseCourseInformation(htmlDoc, &disciplines) {
+		return []string{}, nil
+	}
 	return disciplines, nil
+}
+
+func parseCourseInformation(htmlDoc *html.Node, disciplines *[]string) bool {
+
+	return true
 }
 
 func CourseUpdated(htmlDocument *html.Node) bool {
