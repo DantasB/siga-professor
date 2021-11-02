@@ -6,7 +6,7 @@ import (
 	crawler "github.com/DantasB/Siga-Professor/Crawler"
 )
 
-func GetProfessor(w http.ResponseWriter, r *http.Request) {
+func GetProfessorDisciplines(w http.ResponseWriter, r *http.Request) {
 	// Get all professor disciplines
 	return
 }
