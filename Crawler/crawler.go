@@ -79,11 +79,11 @@ func accessSiraCourse(courseUrl string) ([]string, error) {
 
 func parseCourseInformation(htmlDoc *html.Node, disciplines *[]string) bool {
 	parseComplementaryDisciplines(htmlDoc, disciplines)
-	parseMainDisciplines(htmlDoc, disciplines)
+	parseMandatoryDisciplines(htmlDoc, disciplines)
 	return true
 }
 
-func parseMainDisciplines(htmlDoc *html.Node, disciplines *[]string) {
+func parseMandatoryDisciplines(htmlDoc *html.Node, disciplines *[]string) {
 	panic("unimplemented")
 }
 
