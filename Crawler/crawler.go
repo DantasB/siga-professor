@@ -15,7 +15,7 @@ import (
 
 var siraUrl = "https://siga.ufrj.br/sira/gradeHoraria/"
 
-func GetSiraCoursesList() ([]string, error) {
+func getSiraCoursesList() ([]string, error) {
 	var courses []string
 
 	resp, err := http.Get(siraUrl)
@@ -41,17 +41,17 @@ func GetSiraCoursesList() ([]string, error) {
 }
 
 func AccessSiraCourses() {
-	courses, err := GetSiraCoursesList()
+	courses, err := getSiraCoursesList()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	for _, course := range courses {
-		AccessSiraCourse(course)
+		accessSiraCourse(course)
 	}
 }
 
-func AccessSiraCourse(courseUrl string) ([]string, error) {
+func accessSiraCourse(courseUrl string) ([]string, error) {
 	var disciplines []string
 	resp, err := http.Get(siraUrl + courseUrl)
 	if err != nil {
@@ -66,45 +66,45 @@ func AccessSiraCourse(courseUrl string) ([]string, error) {
 	}
 
 	htmlDoc, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
-
-	if !CourseUpdated(htmlDoc) {
+	if !courseUpdated(htmlDoc) {
 		return []string{}, nil
 	}
 
 	if !parseCourseInformation(htmlDoc, &disciplines) {
 		return []string{}, nil
 	}
+
 	return disciplines, nil
 }
 
 func parseCourseInformation(htmlDoc *html.Node, disciplines *[]string) bool {
-
+	parseComplementaryDisciplines(htmlDoc, disciplines)
+	parseMainDisciplines(htmlDoc, disciplines)
 	return true
 }
 
-func CourseUpdated(htmlDocument *html.Node) bool {
+func parseMainDisciplines(htmlDoc *html.Node, disciplines *[]string) {
+	panic("unimplemented")
+}
+
+func parseComplementaryDisciplines(htmlDoc *html.Node, disciplines *[]string) {
+	panic("unimplemented")
+}
+
+func courseUpdated(htmlDocument *html.Node) bool {
 	courseNode := htmlquery.FindOne(htmlDocument, "//font[@size=3]/text()")
 	courseName := strings.TrimSpace(htmlquery.InnerText(courseNode))
 	courseName = strings.TrimSpace(strings.Split(courseName, "-")[0])
 
 	htmlNode := htmlquery.FindOne(htmlDocument, "//td[@align='right']/text()[2]")
 	datetime := strings.TrimSpace(htmlquery.InnerText(htmlNode))
-	splittedDate := strings.Split(datetime, " ")
-	if len(splittedDate) != 4 {
-		fmt.Println("Couldn't Parse the string:", datetime)
-		return false
-	}
-
-	layout := "02/01/2006"
-	parsedTime, err := time.Parse(layout, splittedDate[2])
+	parsedTime, err := utils.ParseDate(datetime)
 	if err != nil {
-		fmt.Println(err)
 		return false
 	}
 
 	currentYear, currentMonth, _ := time.Now().Date()
 	lastUpdateYear, lastUpdateMonth, _ := parsedTime.Date()
-
 	if currentYear > lastUpdateYear || currentMonth > lastUpdateMonth+1 {
 		fmt.Printf("[%s] This is an old course and should be ignored. %s\n", courseName, datetime)
 		return false
