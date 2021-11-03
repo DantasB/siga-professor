@@ -32,6 +32,24 @@ func RemoveSeparators(data string) string {
 }
 
 func ReplaceMultipleSpacesByPipe(data string) string {
-	regex := regexp.MustCompile(` {2,}`)
+	regex := regexp.MustCompile(` {6,}`)
 	return regex.ReplaceAllString(data, "|")
+}
+
+func FillNilDataWithLastLineData(disciplines [][]string) ([][]string, error) {
+	lastLine := []string{}
+	for _, line := range disciplines {
+
+		if line[0] != "\u00a0" {
+			lastLine = line
+		}
+
+		for columnIndex, column := range line {
+			if column == "\u00a0" {
+				line[columnIndex] = lastLine[columnIndex]
+			}
+		}
+	}
+
+	return disciplines, nil
 }
