@@ -30,9 +30,13 @@ func getSiraCoursesList() ([]string, error) {
 		return []string{}, err
 	}
 
-	htmlDoc, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
+	htmlDocument, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
+	if err != nil {
+		log.Fatalln(err)
+		return []string{}, err
+	}
 
-	list := htmlquery.Find(htmlDoc, "//td//a[contains(@href, '.html')]")
+	list := htmlquery.Find(htmlDocument, "//td//a[contains(@href, '.html')]")
 	for _, node := range list {
 		courses = append(courses, htmlquery.SelectAttr(node, "href"))
 	}
@@ -65,30 +69,39 @@ func accessSiraCourse(courseUrl string) ([]string, error) {
 		return []string{}, err
 	}
 
-	htmlDoc, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
-	if !courseUpdated(htmlDoc) {
+	htmlDocument, err := htmlquery.Parse(strings.NewReader(utils.ToUtf8(body)))
+	if err != nil {
+		log.Fatalln(err)
+		return []string{}, err
+	}
+
+	if !courseUpdated(htmlDocument) {
 		return []string{}, nil
 	}
 
-	if !parseCourseInformation(htmlDoc, &disciplines) {
+	if !parseCourseInformation(htmlDocument, &disciplines) {
 		return []string{}, nil
 	}
 
 	return disciplines, nil
 }
 
-func parseCourseInformation(htmlDoc *html.Node, disciplines *[]string) bool {
-	parseComplementaryDisciplines(htmlDoc, disciplines)
-	parseMandatoryDisciplines(htmlDoc, disciplines)
+func parseCourseInformation(htmlDocument *html.Node, disciplines *[]string) bool {
+	parseDisciplines(htmlDocument, disciplines)
 	return true
 }
 
-func parseMandatoryDisciplines(htmlDoc *html.Node, disciplines *[]string) {
-	panic("unimplemented")
-}
+func parseDisciplines(htmlDocument *html.Node, disciplines *[]string) {
+	disciplineNodes := htmlquery.Find(htmlDocument, "//td//td//table[@class='lineBorder']//table//tr[@class != 'tableTitle']")
+	for _, node := range disciplineNodes {
+		line := htmlquery.InnerText(node)
+		line = utils.ReplaceMultipleSpacesByPipe(utils.RemoveSeparators(line))
+		if strings.Contains(line, "Lista de Disciplinas") || strings.Contains(line, "Nome Turma") {
+			continue
+		}
 
-func parseComplementaryDisciplines(htmlDoc *html.Node, disciplines *[]string) {
-	panic("unimplemented")
+		fmt.Printf("%s\n", line)
+	}
 }
 
 func courseUpdated(htmlDocument *html.Node) bool {
