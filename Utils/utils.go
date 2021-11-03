@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -19,9 +20,18 @@ func ToUtf8(iso8859_1_buf []byte) string {
 func ParseDate(date string) (time.Time, error) {
 	splittedDate := strings.Split(date, " ")
 	if len(splittedDate) != 4 {
-		return time.Time{}, errors.New("Couldn't Split the string")
+		return time.Time{}, errors.New("could not split the string")
 	}
 
 	parsedTime, err := time.Parse(layout, splittedDate[2])
 	return parsedTime, err
+}
+
+func RemoveSeparators(data string) string {
+	return strings.Replace(strings.Replace(strings.Replace(data, "\t", " ", -1), "\r", " ", -1), "\n", " ", -1)
+}
+
+func ReplaceMultipleSpacesByPipe(data string) string {
+	regex := regexp.MustCompile(` {2,}`)
+	return regex.ReplaceAllString(data, "|")
 }
