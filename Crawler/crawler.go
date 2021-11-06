@@ -99,6 +99,10 @@ func parseDisciplines(htmlDocument *html.Node) [][]string {
 		line := htmlquery.InnerText(node)
 
 		line = utils.ReplaceMultipleSpacesByPipe(utils.RemoveSeparators(line))
+		if len(line) == 0 {
+			continue
+		}
+
 		line = line[1 : len(line)-1] //Remove the first and last pipe character
 		if strings.Contains(line, "Lista de Disciplinas") || strings.Contains(line, "Nome Turma") {
 			continue
