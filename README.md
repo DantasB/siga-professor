@@ -15,7 +15,7 @@
 
 ## About
 
-This repository is a Simple api that access every UFRJ course and get all the oppened disciplines and their professors. It was built using golang.
+This repository is a Simple api that access every UFRJ course and get all the oppened disciplines and their professors. It was built using golang. If you want to see the chart you can access it: [MongoDB Chart](https://charts.mongodb.com/charts-m001-skvbx/public/dashboards/6187a921-8487-41e2-8cbd-82729112cbc8)
 
 ## Requirements
 
