@@ -63,7 +63,7 @@ func FoundOne(collection *mongo.Collection, filter interface{}) (*mongo.SingleRe
 func SafeInsertOne(collection *mongo.Collection, document interface{}, filter primitive.M) (*mongo.InsertOneResult, error) {
 	_, foundedObject := FoundOne(collection, filter)
 	if foundedObject {
-		fmt.Print("Object already in the database.")
+		fmt.Println("Object already in the database.")
 		return nil, nil
 	}
 
@@ -88,15 +88,15 @@ func InsertOne(collection *mongo.Collection, document interface{}) (*mongo.Inser
 func BuildFilter(document interface{}, objectType string) primitive.M {
 	if objectType == "Discipline" {
 		return bson.M{
-			"name":      document.(models.Discipline).Name,
-			"code":      document.(models.Discipline).Code,
-			"class":     document.(models.Discipline).Class,
-			"datetime":  document.(models.Discipline).Datetime,
-			"professor": document.(models.Discipline).ProfessorID,
+			"nome":         document.(models.Discipline).Name,
+			"codigo":       document.(models.Discipline).Code,
+			"turma":        document.(models.Discipline).Class,
+			"dias":         document.(models.Discipline).Datetime,
+			"professor_id": document.(models.Discipline).ProfessorID,
 		}
 	} else if objectType == "Professor" {
 		return bson.M{
-			"name": document.(models.Professor).Name,
+			"nome": document.(models.Professor).Name,
 		}
 	} else {
 		log.Fatalln("Object type not found.")
