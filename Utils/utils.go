@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -91,40 +92,51 @@ func RemoveDuplicateLines(disciplines [][]string) [][]string {
 	return deduplicatedDisciplines
 }
 
-func ConvertToObjects(disciplines [][]string, professorsCollection *mongo.Collection, disciplinesCollection *mongo.Collection) ([]models.Discipline, []models.Professor) {
-	disciplinesObjects := []models.Discipline{}
-	professorsObjects := []models.Professor{}
+func SaveOnMongo(disciplines [][]string, professorsCollection *mongo.Collection, disciplinesCollection *mongo.Collection) bool {
 	for _, line := range disciplines {
+		professorObject := generateProfessorObject(professorsCollection, line)
+		disciplineObject := generateDisciplineObject(disciplinesCollection, line, professorObject.ID)
 
-		professorObject := generateProfessorObject(professorsCollection, line, &professorsObjects)
+		professorFilter := BuildFilter(professorObject, "Professor")
+		disciplineFilter := BuildFilter(disciplineObject, "Discipline")
 
-		generateDisciplineObject(disciplinesCollection, line, professorObject.ID, &disciplinesObjects)
-	}
-
-	return disciplinesObjects, professorsObjects
-}
-
-func generateDisciplineObject(collection *mongo.Collection, line []string, professorID primitive.ObjectID, disciplinesObjects *[]models.Discipline) {
-	filter := bson.M{
-		"name":      line[2],
-		"code":      line[0],
-		"class":     line[1],
-		"datetime":  models.Datetime{line[3], line[4]},
-		"professor": professorID,
-	}
-
-	queryResult, found := FoundOne(collection, filter)
-	if found {
-		discipline := models.Professor{}
-		err := queryResult.Decode(discipline)
+		fmt.Printf("Trying to insert the Professor %v in the database.\n", professorObject.Name)
+		_, err := SafeInsertOne(professorsCollection, professorObject, professorFilter)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		return
+		fmt.Printf("Trying to insert the Discipline %v in the database.\n", disciplineObject.Name)
+		_, err = SafeInsertOne(disciplinesCollection, disciplineObject, disciplineFilter)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
-	disciplineObject := models.Discipline{
+	return true
+}
+
+func generateDisciplineObject(collection *mongo.Collection, line []string, professorID primitive.ObjectID) models.Discipline {
+	filter := bson.M{
+		"nome":         line[2],
+		"codigo":       line[0],
+		"turma":        line[1],
+		"dias":         models.Datetime{line[3], line[4]},
+		"professor_id": professorID,
+	}
+
+	queryResult, found := FoundOne(collection, filter)
+	if found {
+		discipline := models.Discipline{}
+		err := queryResult.Decode(&discipline)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		return discipline
+	}
+
+	return models.Discipline{
 		ID:          primitive.NewObjectID(),
 		Name:        line[2],
 		Code:        line[0],
@@ -132,19 +144,17 @@ func generateDisciplineObject(collection *mongo.Collection, line []string, profe
 		Datetime:    models.Datetime{line[3], line[4]},
 		ProfessorID: professorID,
 	}
-
-	*disciplinesObjects = append(*disciplinesObjects, disciplineObject)
-
 }
 
-func generateProfessorObject(collection *mongo.Collection, line []string, professorsObjects *[]models.Professor) models.Professor {
-
-	filter := bson.M{"name": line[5]}
+func generateProfessorObject(collection *mongo.Collection, line []string) models.Professor {
+	filter := bson.M{
+		"nome": line[5],
+	}
 
 	queryResult, found := FoundOne(collection, filter)
 	if found {
 		professor := models.Professor{}
-		err := queryResult.Decode(professor)
+		err := queryResult.Decode(&professor)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -152,17 +162,8 @@ func generateProfessorObject(collection *mongo.Collection, line []string, profes
 		return professor
 	}
 
-	professorObject := models.Professor{
+	return models.Professor{
 		ID:   primitive.NewObjectID(),
 		Name: line[5],
 	}
-
-	*professorsObjects = append(*professorsObjects, professorObject)
-
-	_, err := InsertOne(collection, professorObject)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	return professorObject
 }
