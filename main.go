@@ -17,9 +17,9 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/professors", controller.GetProfessors).Methods("GET")
+	router.HandleFunc("/filldatabase", controller.FillDatabase).Methods("GET")
 	router.HandleFunc("/professors/{id}", controller.GetProfessorDisciplines).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":8000", router))
+	http.ListenAndServe(":8000", router)
 
 }
