@@ -72,7 +72,7 @@ func SafeInsertOne(collection *mongo.Collection, document interface{}, filter pr
 		log.Fatalln(err)
 	}
 
-	fmt.Print("Object inserted in the database.")
+	fmt.Println("Object inserted in the database.")
 	return result, err
 }
 
