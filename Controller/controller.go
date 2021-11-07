@@ -38,19 +38,9 @@ func FillDatabase(w http.ResponseWriter, r *http.Request) {
 	professorsCollection := utils.GetCollection("professors")
 
 	//Generate objects from disciplines slice
-	fmt.Println("Building Objects.")
-	disciplineObjects, professorObjects := utils.ConvertToObjects(disciplines, professorsCollection, disciplinesCollection)
-
-	for _, professor := range professorObjects {
-		filter := utils.BuildFilter(professor, "professor")
-		fmt.Printf("Trying to insert the Professor %v in the database.\n", professor.Name)
-		utils.SafeInsertOne(professorsCollection, professor, filter)
+	if utils.SaveOnMongo(disciplines, professorsCollection, disciplinesCollection) {
+		fmt.Println("Database filled successfully.")
+	} else {
+		fmt.Println("Error on database filling.")
 	}
-
-	for _, discipline := range disciplineObjects {
-		filter := utils.BuildFilter(discipline, "discipline")
-		fmt.Printf("Trying to insert the Discipline %v in the database.\n", discipline.Name)
-		utils.SafeInsertOne(disciplinesCollection, discipline, filter)
-	}
-
 }
