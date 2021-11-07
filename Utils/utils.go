@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -166,4 +168,17 @@ func generateProfessorObject(collection *mongo.Collection, line []string) models
 		ID:   primitive.NewObjectID(),
 		Name: line[5],
 	}
+}
+
+func GetDisciplinesByProfessor(professor models.Professor, collection *mongo.Collection) []interface{} {
+	filter := bson.M{
+		"professor_id": professor.ID,
+	}
+
+	return FindAll(collection, filter, "Discipline")
+}
+
+func ReturnJSON(w http.ResponseWriter, data []interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
 }
