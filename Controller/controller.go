@@ -4,13 +4,44 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	crawler "github.com/DantasB/Siga-Professor/Crawler"
+	models "github.com/DantasB/Siga-Professor/Models"
 	utils "github.com/DantasB/Siga-Professor/Utils"
+	"github.com/gorilla/mux"
 )
 
 func GetProfessorDisciplines(w http.ResponseWriter, r *http.Request) {
 	// Get all professor disciplines
+	params := mux.Vars(r)
+	professor := strings.ToUpper(params["professor"])
+	professorObject := models.Professor{}
+	professorObject.Name = professor
+
+	disciplinesCollection := utils.GetCollection("disciplines")
+	professorsCollection := utils.GetCollection("professors")
+
+	//Get the professor object
+	fmt.Println("Trying to find this professor in the database")
+	queryResult, found := utils.FoundOne(professorsCollection, utils.BuildTextFilter(professorObject.Name))
+	if !found {
+		fmt.Println("Professor not found.")
+		return
+	}
+
+	err := queryResult.Decode(&professorObject)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	//Get the disciplines of the professor
+	fmt.Println("Trying to find the disciplines of this professor in the database")
+	disciplines := utils.GetDisciplinesByProfessor(professorObject, disciplinesCollection)
+
+	//Return the disciplines
+	utils.ReturnJSON(w, disciplines)
+
 }
 
 func FillDatabase(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +49,6 @@ func FillDatabase(w http.ResponseWriter, r *http.Request) {
 	disciplines, err := crawler.AccessSiraCourses()
 	if err != nil {
 		log.Fatalln(err)
-		return
 	}
 
 	//Treat the null disciplines
@@ -26,7 +56,6 @@ func FillDatabase(w http.ResponseWriter, r *http.Request) {
 	disciplines, err = utils.FillNilDataWithLastLineData(disciplines)
 	if err != nil {
 		log.Fatalln(err)
-		return
 	}
 
 	//Remove the duplicate lines in the disciplines slice
