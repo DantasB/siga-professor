@@ -60,6 +60,73 @@ func FoundOne(collection *mongo.Collection, filter interface{}) (*mongo.SingleRe
 	return result, true
 }
 
+func FindAll(collection *mongo.Collection, filter primitive.M, dataType string) []interface{} {
+	var results []interface{}
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		fmt.Println("Data not found.")
+		return results
+	}
+
+	if dataType == "Discipline" {
+		FindAllDisciplines(cursor, &results)
+	} else if dataType == "Professor" {
+		FindAllProfessors(cursor, &results)
+	} else {
+		log.Fatalln("Object type not found.")
+	}
+
+	return results
+}
+
+func FindAllProfessors(cursor *mongo.Cursor, professors *[]interface{}) {
+	uniqueProfessors := map[string]string{}
+	for cursor.Next(context.TODO()) {
+		var professor models.Professor
+		err := cursor.Decode(&professor)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if _, ok := uniqueProfessors[professor.Name]; ok {
+		} else {
+			uniqueProfessors[professor.Name] = professor.Name
+			*professors = append(*professors, professor)
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	//Close the cursor
+	cursor.Close(context.TODO())
+}
+
+func FindAllDisciplines(cursor *mongo.Cursor, disciplines *[]interface{}) {
+	uniqueDisciplines := map[string]string{}
+	for cursor.Next(context.TODO()) {
+		//Create a value into which the single document can be decoded
+		discipline := models.Discipline{}
+		err := cursor.Decode(&discipline)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if _, ok := uniqueDisciplines[discipline.Name]; ok {
+		} else {
+			uniqueDisciplines[discipline.Name] = discipline.Name
+			*disciplines = append(*disciplines, discipline)
+		}
+
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	//Close the cursor
+	cursor.Close(context.TODO())
+}
+
 func SafeInsertOne(collection *mongo.Collection, document interface{}, filter primitive.M) (*mongo.InsertOneResult, error) {
 	_, foundedObject := FoundOne(collection, filter)
 	if foundedObject {
@@ -102,4 +169,8 @@ func BuildFilter(document interface{}, objectType string) primitive.M {
 		log.Fatalln("Object type not found.")
 		return nil
 	}
+}
+
+func BuildTextFilter(text string) primitive.M {
+	return bson.M{"$text": bson.M{"$search": text}}
 }
