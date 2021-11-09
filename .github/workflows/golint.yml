@@ -24,4 +24,4 @@ jobs:
           
       - name: Run Golang-lint
         run: |
-          golangci-lint run --disable govet errcheck
+          golangci-lint run --disable govet --disable errcheck
