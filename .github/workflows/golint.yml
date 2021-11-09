@@ -24,4 +24,4 @@ jobs:
           
       - name: Run Golang-lint
         run: |
-          golangci-lint run
+          golangci-lint run --exclude EXC0004
